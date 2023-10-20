@@ -62,8 +62,6 @@ void makeChild(int processNum, int filter[][3]) {
         printf("x, y, n : %d %d %d\n", x, y, n);
 
         write(pipefd[1], pipeBuf, sizeof(pipeBuf));
-
-        printf("ddd");
       }
       close(pipefd[1]);
       exit(EXIT_SUCCESS);
