@@ -5,14 +5,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
-
+#include <sys/wait.h>
 
 void makeChild(int processNum, int filter[][3]) {
   //pipe 만들기
   int pipefd[2];
   int pipeBuf[3];   //{x, y, n} output[x][y] = n
 
-  if (pipe2(pipefd, O_NONBLOCK) == -1) {
+  if (pipe(pipefd) == -1) {
     perror("pipe");
     exit(EXIT_FAILURE);
   }
@@ -31,12 +31,12 @@ void makeChild(int processNum, int filter[][3]) {
     }
     now_start_idx = idx_array[pn][1] + 1;
 
-    printf("idx_array : %d, %d\n", idx_array[pn][0], idx_array[pn][1]);
+    // printf("idx_array : %d, %d\n", idx_array[pn][0], idx_array[pn][1]);
   }
 
   for (int now_process_num = 0; now_process_num < processNum; now_process_num++) {
     pid_t child_pid = fork();
-    printf("cpid ; %d\n", child_pid);
+    //printf("cpid ; %d\n", child_pid);
     if (child_pid == -1) {
       perror("fork");
       exit(EXIT_FAILURE);
@@ -59,19 +59,23 @@ void makeChild(int processNum, int filter[][3]) {
         pipeBuf[1] = y;
         pipeBuf[2] = n;
 
-        printf("x, y, n : %d %d %d\n", x, y, n);
-
+        //printf("x, y, n : %d %d %d\n", x, y, n);
         write(pipefd[1], pipeBuf, sizeof(pipeBuf));
       }
       close(pipefd[1]);
+
       exit(EXIT_SUCCESS);
     }
-    else {  //parent
+      //while (wait() != 0)
+    }
+
       close(pipefd[1]);
       int output[N-2][N-2];
 
       //pipe에서 받아오는 부분
-      while (read(pipefd[0], pipeBuf, sizeof(pipeBuf)) != -1) {
+      while (waitpid(-1, NULL, 0) > 0);
+
+      while (read(pipefd[0], pipeBuf, sizeof(pipeBuf)) > 0) {
         output[pipeBuf[0]][pipeBuf[1]] = pipeBuf[2];
       }
       close(pipefd[0]);
@@ -83,12 +87,7 @@ void makeChild(int processNum, int filter[][3]) {
           if (row != N-3)
             printf(" ");
         }
-        if (col != N-3)
-          printf("\n");
-      }
-
-      //while (wait() != 0)
-    }
+        printf("\n");
   }
 
   /* 
