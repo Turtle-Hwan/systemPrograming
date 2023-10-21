@@ -25,7 +25,7 @@ int output[N - 2][N - 2];
   int remainder = ((N - 2) * (N - 2)) % processNum; // 전체 계산량 / processNum 에서 나머지 개수
   int idx_array[processNum][2];                     // 각각의 프로세스가 계산해야 할 startIdx, endIdx 저장한 배열
 
-  for (int pn = 0; pn < processNum; pn++)
+  for (int pn = 0; pn < processNum; pn++) // processNum < N-2 N-2 인 경우 idx seg fault 나는지? 확인 필요
   {
     idx_array[pn][0] = now_start_idx;
     idx_array[pn][1] = now_start_idx + ((N - 2) * (N - 2)) / processNum - 1;
@@ -74,6 +74,7 @@ int output[N - 2][N - 2];
       exit(EXIT_SUCCESS);
     }
     ///printf("ddd\n");
+    
     fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
       while (read(pipefd[0], pipeBuf, sizeof(pipeBuf)) > 0)
       {
@@ -84,6 +85,8 @@ int output[N - 2][N - 2];
     flag &= ~O_NONBLOCK;
     fcntl(pipefd[0], F_SETFL, flag);
   }
+
+  ////child들이 모두 fork 되고나서 (for문 다 돌아야) read 해오는 것?
 
   close(pipefd[1]);
   

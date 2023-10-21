@@ -8,7 +8,8 @@ void random_input(int n, int input_array[][n]) {
 
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      input_array[i][j] = 1000000000 - rand();
+      input_array[i][j] = 100 - (rand() % 200);
+      //printf("%d\n", input_array[i][j]);
     }
   }
 }
