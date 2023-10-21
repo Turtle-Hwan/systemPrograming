@@ -99,6 +99,7 @@ void makeChild(int processNum, int filter[][3]) {
   */
 }
 
+
 int main(int argc, char** argv) { //201911560 김지환
   if (argc != 2) {
     //printf("ERR: 인자 1개만 입력해 주세요. ex) ./ku_conv k\n");
@@ -108,7 +109,7 @@ int main(int argc, char** argv) { //201911560 김지환
   int filter[3][3] = {{-1, -1, -1},
                       {-1, 8, -1},
                       {-1, -1, -1}};
-  
+
   makeChild(processNum, filter);
   return 0;
 }
