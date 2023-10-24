@@ -1,5 +1,8 @@
 {
   "files.associations": {
-    "ku_input.h": "c"
+    "ku_input.h": "c",
+    "fcntl.h": "c",
+    "unistd.h": "c",
+    "stdlib.h": "c"
   }
 }
