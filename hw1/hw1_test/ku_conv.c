@@ -18,7 +18,7 @@ void makeChild(int processNum, int filter[][3])
     exit(EXIT_FAILURE);
   }
 
-int output[N - 2][N - 2];
+  int output[N - 2][N - 2] = {0, };
 
   // 자식 processNum개로 생성하기 for 돌릴 때, 자식에게 계산 몇 개씩 분배
   int now_start_idx = 0;
@@ -29,7 +29,7 @@ int output[N - 2][N - 2];
   {
     idx_array[pn][0] = now_start_idx;
     idx_array[pn][1] = now_start_idx + ((N - 2) * (N - 2)) / processNum - 1;
-    if (remainder != 0)
+    if (remainder >= 0)
     {
       idx_array[pn][1] += 1;
       remainder -= 1;
@@ -67,6 +67,7 @@ int output[N - 2][N - 2];
         pipeBuf[2] = n;
 
         // printf("x, y, n : %d %d %d\n", x, y, n);
+        //printf("%d child write", now_process_num);
         write(pipefd[1], pipeBuf, sizeof(pipeBuf));
       }
       close(pipefd[1]);
@@ -74,23 +75,31 @@ int output[N - 2][N - 2];
       exit(EXIT_SUCCESS);
     }
     ///printf("ddd\n");
-    
-    fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
-      while (read(pipefd[0], pipeBuf, sizeof(pipeBuf)) > 0)
+    //if (now_process_num == 0) {
+      close(pipefd[1]);  
+      fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
+      printf("parent - read\n\n");
+      while (1)
       {
-        output[pipeBuf[0]][pipeBuf[1]] = pipeBuf[2];
+        int return_read = read(pipefd[0], pipeBuf, sizeof(pipeBuf));
+        if (return_read == 0)
+          break;
+        else if (return_read > 0) {
+          output[pipeBuf[0]][pipeBuf[1]] = pipeBuf[2];
+        }
       }
 
-    int flag = fcntl(pipefd[0], F_GETFL, 0);
-    flag &= ~O_NONBLOCK;
-    fcntl(pipefd[0], F_SETFL, flag);
+      int flag = fcntl(pipefd[0], F_GETFL, 0);
+      flag &= ~O_NONBLOCK;
+      fcntl(pipefd[0], F_SETFL, flag);
+    //}
   }
-
   ////child들이 모두 fork 되고나서 (for문 다 돌아야) read 해오는 것?
 
-  close(pipefd[1]);
-  
+
+
   // pipe에서 받아오는 부분
+      
   while (read(pipefd[0], pipeBuf, sizeof(pipeBuf)) > 0)
   {
     output[pipeBuf[0]][pipeBuf[1]] = pipeBuf[2];

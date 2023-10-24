@@ -1,7 +1,6 @@
 #include "ku_input.h"
 #include <stdio.h>
 #include <stdlib.h>
-#define _GNU_SOURCE
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
@@ -45,6 +44,7 @@ void makeChild(int processNum, int filter[][3]) {
       close(pipefd[0]); //child에서는 read 안함.
       for (int i = idx_array[now_process_num][0]; i <= idx_array[now_process_num][1]; i++) {
         //실제 계산할 행렬[][]의 idx로 변환
+
         int x = i/(N-2);  
         int y = i%(N-2);
         int n = 0;  //계산 결과값
@@ -103,11 +103,13 @@ void makeChild(int processNum, int filter[][3]) {
 int main(int argc, char** argv) { //201911560 김지환
   if (argc != 2) {
     //printf("ERR: 인자 1개만 입력해 주세요. ex) ./ku_conv k\n");
-    return -1;
+    return 1;
   }
   int processNum = atoi(argv[1]);
-  if (processNum <= 0)
-    return -1;
+  if (processNum <= 0) {
+    //printf("프로세스 개수는 양수여야 합니다.")
+    return 1;
+  }
   int filter[3][3] = {{-1, -1, -1},
                       {-1, 8, -1},
                       {-1, -1, -1}};

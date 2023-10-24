@@ -9,6 +9,8 @@ void random_input(int n, int input_array[][n]) {
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
       input_array[i][j] = 100 - (rand() % 200);
+      if (input_array[i][j] == 0)
+        input_array[i][j] += 1;
       //printf("%d\n", input_array[i][j]);
     }
   }
