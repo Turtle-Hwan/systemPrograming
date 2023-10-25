@@ -1,5 +1,6 @@
 {
   "files.associations": {
-    "ku_input.h": "c"
+    "ku_input.h": "c",
+    "string.h": "c"
   }
 }
