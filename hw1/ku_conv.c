@@ -1,6 +1,7 @@
 #include "ku_input.h"
 #include <stdio.h>
 #include <stdlib.h>
+#define _GNU_SOURCE
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
