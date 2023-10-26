@@ -13,11 +13,13 @@ void makeChild(int processNum, int filter[][3])
   int pipefd[2];
   int pipeBuf[3]; //{x, y, n} output[x][y] = n
 
-  if (pipe2(pipefd, O_NONBLOCK) == -1)
+  if (pipe(pipefd) == -1)
   {
     perror("pipe");
     exit(EXIT_FAILURE);
   }
+  fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
+  fcntl(pipefd[1], F_SETFL, O_NONBLOCK);
   
   //process 개수는 최대 총 연산할 개수만큼 되도록 내부적으로 맞춰주기
   if (processNum > (N - 2) * (N - 2)) {
