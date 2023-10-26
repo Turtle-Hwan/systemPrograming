@@ -1,11 +1,11 @@
 #include "ku_input.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-
+#define _GNU_SOURCE             /* See feature_test_macros(7) */
+#include <fcntl.h>              /* Obtain O_* constant definitions */
+#include <unistd.h>
 #include <time.h>
 
 clock_t s_time, e_time;
@@ -43,7 +43,7 @@ void makeChild(int processNum, int filter[][3])
 
     // printf("idx_array : %d, %d\n", idx_array[pn][0], idx_array[pn][1]);
   }
-  s_time = clock();
+
   for (int now_process_num = 0; now_process_num < processNum; now_process_num++)
   {
     pid_t child_pid = fork();
@@ -93,19 +93,25 @@ void makeChild(int processNum, int filter[][3])
     //}
   }
   ////child들이 모두 fork 되고나서 (for문 다 돌아야) read 해오는 것?
-   e_time = clock();
-      close(pipefd[1]);  
-      //fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
-      //printf("parent - read\n\n");
-      while (1)
-      {
-        int return_read = read(pipefd[0], pipeBuf, sizeof(pipeBuf));
-        if (return_read == 0)
-          break;
-        else if (return_read > 0) {
-          output[pipeBuf[0]][pipeBuf[1]] = pipeBuf[2];
-        }
+    s_time = clock();
+
+    close(pipefd[1]);  
+    //fcntl(pipefd[0], F_SETFL, O_NONBLOCK);
+    //printf("parent - read\n\n");
+    while (1)
+    {
+      int return_read = read(pipefd[0], pipeBuf, sizeof(pipeBuf));
+      if (return_read > 0) {
+        output[pipeBuf[0]][pipeBuf[1]] = pipeBuf[2];
       }
+      else if (return_read == 0)
+        break;
+    }
+  close(pipefd[0]);
+
+
+  e_time = clock();
+  while (waitpid(-1, NULL, 0) > 0);
  
   // pipe에서 받아오는 부분
       
@@ -114,7 +120,6 @@ void makeChild(int processNum, int filter[][3])
   //   output[pipeBuf[0]][pipeBuf[1]] = pipeBuf[2];
   // }
 
-  close(pipefd[0]);
 
   // print 하는 부분
   //if (read(pipefd[0], pipeBuf, sizeof(pipeBuf)) == 0) {
@@ -131,7 +136,7 @@ void makeChild(int processNum, int filter[][3])
   }
 
     
-  //while (waitpid(-1, NULL, 0) > 0);
+
   //printf("wait 끝\n");
 
   /*
