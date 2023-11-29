@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/mman.h>
+#include <stdio.h>
 
 typedef	struct arg
 {
@@ -17,7 +18,7 @@ typedef	struct arg
 int					bmp_start_idx;	//처음 할당되고 변하지 않음.
 unsigned char		*bmp_mmap;		//처음 할당되고 변하지 않고, 읽기만 함.
 volatile long long	color_histogram[256] = {0, }; //초기화 된 후, 각 스레드가 접근.
-pthread_mutex_t			mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t		mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 void	my_write(int fd, char *str)
@@ -67,7 +68,6 @@ char	*itoa(long long n)
 	return (ret);
 }
 
-
 /** bmp file fd와 특정 offset 받아서, 여기서부터 4byte를 int형으로 변환하는 함수*/
 int	bmp_hex_4byte_to_int(int fd, __off_t offset)
 {
@@ -84,7 +84,6 @@ int	bmp_hex_4byte_to_int(int fd, __off_t offset)
 		for (int j = 0; j < i*2; j++)
 			d *= 16;
 		ret_val += file_buf[i] * d;
-		//printf("%02X %d start : %X, %d\n", file_buf[i], file_buf[i], ret_val, ret_val);
 	}
 	return ret_val;
 }
@@ -105,7 +104,6 @@ void	*thread_function (void *arg)
 	return (NULL);
 }
 
-#include <stdio.h>
 //201911560 김지환
 int	main(int argc, char **argv)
 {
@@ -114,6 +112,7 @@ int	main(int argc, char **argv)
 		my_write(2, "ERR: 입력 양식은  ./ku_histo n i input.bmp  입니다.\n");
 		return(1);
 	}
+
 	int		thread_num = atoi(argv[1]);
 	int		histo_range = atoi(argv[2]);
 	char	*bmp_fname = argv[3];
@@ -134,7 +133,7 @@ int	main(int argc, char **argv)
 	long long	bmp_width = bmp_hex_4byte_to_int(bmp_fd, 18);
 	long long	bmp_height = bmp_hex_4byte_to_int(bmp_fd, 22);
 
-	//mmap
+	//file을 mmap으로 변환
 	struct stat	bmp_st;	//file 정보
 	if (fstat(bmp_fd, &bmp_st) == -1)
 	{
@@ -147,6 +146,7 @@ int	main(int argc, char **argv)
 		perror("mmap");
 		return (1);
 	}
+
 
 	/** 스레드 나누기 */
 	pthread_t	thread_id[thread_num];
@@ -196,7 +196,7 @@ int	main(int argc, char **argv)
 	}
 
 	/** 결과값 출력 부분 */
-	int	output_fd = creat("results.txt", 0666);
+	int	output_fd = creat("results.txt", 0644);
 	if (output_fd == -1)
 	{
 		perror("creat");
