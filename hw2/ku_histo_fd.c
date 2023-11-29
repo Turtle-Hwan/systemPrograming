@@ -15,10 +15,12 @@ typedef	struct arg
 	long long	t_count_num;
 } thread_arg;
 
+char				*bmp_fname;
 int					bmp_start_idx;	//처음 할당되고 변하지 않음.
 unsigned char		*bmp_mmap;		//처음 할당되고 변하지 않고, 읽기만 함.
 volatile long long	color_histogram[256] = {0, }; //초기화 된 후, 각 스레드가 접근.
 pthread_mutex_t		mutex[256];	//color_histogram의 각 칸마다 따로 막아주기 위해 mutex 배열로 선언했다.
+
 
 void	my_write(int fd, char *str)
 {
@@ -90,15 +92,18 @@ int	bmp_hex_4byte_to_int(int fd, __off_t offset)
 /** thread function*/
 void	*thread_function (void *arg)
 {
-	thread_arg	*targ = (thread_arg *)arg;
-	
-	//각자 스레드에 할당된 범위만큼 bmp_mmap[]을 순회하면서 color_histogram에 한 스레드씩만 접근해서 기록
+	thread_arg		*targ = (thread_arg *)arg;
+	int				t_fd = open(bmp_fname, O_RDONLY);
+	unsigned char	c;
+	//각자 스레드에 할당된 범위만큼 file read
+	lseek(t_fd, bmp_start_idx + targ->t_start_idx, SEEK_SET);
 	for (int i = 0; i < targ->t_count_num; i++)
 	{
-		int	idx = bmp_mmap[bmp_start_idx + targ->t_start_idx + i];
-		pthread_mutex_lock(&mutex[idx]);
-		color_histogram[idx] += 1;
-		pthread_mutex_unlock(&mutex[idx]);
+		//c에 읽은 값 저장하고, c는 hex data 이므로 바로 index로 사용
+		read(t_fd, &c, 1);
+		pthread_mutex_lock(&mutex[c]);
+		color_histogram[c] += 1;
+		pthread_mutex_unlock(&mutex[c]);
 	}
 	return (NULL);
 }
@@ -114,7 +119,7 @@ int	main(int argc, char **argv)
 
 	int		thread_num = atoi(argv[1]);
 	int		histo_range = atoi(argv[2]);
-	char	*bmp_fname = argv[3];
+	bmp_fname = argv[3];
 	if (thread_num <= 0 || histo_range <= 0 || histo_range > 256)
 	{
 		my_write(2, "ERR: 범위 에러");
@@ -132,20 +137,20 @@ int	main(int argc, char **argv)
 	long long	bmp_width = bmp_hex_4byte_to_int(bmp_fd, 18);
 	long long	bmp_height = bmp_hex_4byte_to_int(bmp_fd, 22);
 
-	//file을 mmap으로 변환
-	struct stat	bmp_st;	//file 정보
-	if (fstat(bmp_fd, &bmp_st) == -1)
-	{
-		perror("fstat");
-		return (1);
-	}
-	bmp_mmap = mmap(0, bmp_st.st_size, PROT_READ, MAP_SHARED, bmp_fd, 0);
-	if (bmp_mmap == MAP_FAILED)
-	{
-		perror("mmap");
-		return (1);
-	}
 
+	// //file을 mmap으로 변환
+	// struct stat	bmp_st;	//file 정보
+	// if (fstat(bmp_fd, &bmp_st) == -1)
+	// {
+	// 	perror("fstat");
+	// 	return (1);
+	// }
+	// bmp_mmap = mmap(0, bmp_st.st_size, PROT_READ, MAP_SHARED, bmp_fd, 0);
+	// if (bmp_mmap == MAP_FAILED)
+	// {
+	// 	perror("mmap");
+	// 	return (1);
+	// }
 
 	/** 스레드 나누기 */
 	pthread_t	thread_id[thread_num];
@@ -193,7 +198,7 @@ int	main(int argc, char **argv)
 		t_status = pthread_join(thread_id[i], NULL);
 		if (t_status != 0)
 		{
-			perror("thread_join");
+			perror("thread_create");
 			return(1);
 		}
 	}
